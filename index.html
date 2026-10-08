@@ -32,6 +32,8 @@
   button.opt:active, button.go:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--dark); }
   .reaction { font-size:1.15rem; margin:16px 0; min-height:3em; }
   #runner { position:fixed; width:auto; display:inline-block; margin:0; padding:12px 28px; z-index:10; }
+  .load { height:10px; border:2px solid var(--dark); border-radius:6px; overflow:hidden; background:#fff; }
+  .load i { display:block; height:100%; width:0; background:var(--wood); }
   .hidden { display:none; }
 </style>
 </head>
@@ -43,6 +45,7 @@
 
 <script>
 const NTFY_URL = "https://ntfy.sh/domantas-bday-ecb745e2af68";
+const READ_MS = 5000;
 const stage = document.getElementById("stage");
 const bar = document.getElementById("bar");
 
@@ -53,7 +56,7 @@ const quiz = [
     ["Tik kai kitas uždega.", "Išmintingas žmogus. Saugus atstumas – 10 metrų."] ]},
   { icon:"🍾", q:"O tai ką pirkai?", opts:[
     ["Jack Domant.", "Klasika. Visi sprendimai paprastesni su Džeku. 🥃"],
-    ["Dar nieko, tik žiūrėjau.", "Taip, aišku. Pilna garažo dėžė pati atsirado."],
+    ["Dar nieko, tik žiūrėjau.", "Taip, aišku. Nauji ratai patys atsirado.🛞"],
     ["Medai nesakyk.", "Mūsų paslaptis. Bet čekis jau išsiųstas. 🧾"] ]},
 ];
 
@@ -61,7 +64,7 @@ function progress(n) { bar.style.width = (n / 3 * 100) + "%"; }
 
 function intro() {
   stage.innerHTML = `<div class="tool">🛠️</div><h1>Domantai, su gimtadieniu!</h1>
-    <p>Čėpla ir Kusta paruošė tau galvosūkį</p>
+    <p>Čėpla ir Kusta paruošė Tau galvosūkį. Pabandom? ♟️</p>
     <button class="go" id="start">Pradėti</button>`;
   document.getElementById("start").onclick = () => ask(0);
 }
@@ -71,11 +74,14 @@ function ask(i) {
   const s = quiz[i];
   stage.innerHTML = `<div class="tool">${s.icon}</div><h1>${s.q}</h1>` +
     s.opts.map((o, k) => `<button class="opt" data-k="${k}">${o[0]}</button>`).join("") +
-    `<div class="reaction" id="r"></div>`;
+    `<div class="reaction" id="r"></div><div class="load"><i id="load"></i></div>`;
   stage.querySelectorAll(".opt").forEach(b => b.onclick = () => {
     stage.querySelectorAll(".opt").forEach(x => x.disabled = true);
     document.getElementById("r").textContent = s.opts[b.dataset.k][1];
-    setTimeout(() => i + 1 < quiz.length ? ask(i + 1) : chase(), 2200);
+    const l = document.getElementById("load");
+    l.style.transition = `width ${READ_MS}ms linear`;
+    requestAnimationFrame(() => requestAnimationFrame(() => l.style.width = "100%"));
+    setTimeout(() => i + 1 < quiz.length ? ask(i + 1) : chase(), READ_MS);
   });
 }
 
@@ -93,7 +99,7 @@ function chase() {
     btn.style.top = Math.random() * (innerHeight - btn.offsetHeight - 20) + 10 + "px";
   };
   btn.style.left = "calc(50% - 50px)"; btn.style.top = "62%";
-  const lines = ["Per lėtas! 🐌", "Ne tas raktas! 🔑", "Bandyk dar!", "Beveik! (nea)", "Gal su kūju?"];
+  const lines = ["Per lėtas! 🐌", "Gal stipriau?", "Bandyk dar!", "Beveik! Bet dar truputį ne", "Gal su kūju?"];
   const dodge = () => {
     if (tries >= 5) return;
     tries++;
