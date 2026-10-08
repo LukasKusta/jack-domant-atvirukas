@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gimtadienio atvirukas</title>
+<style>
+  :root { --wood:#c8963e; --dark:#3b2a14; --peg:#d9b36a; --red:#d62828; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    font-family:"Trebuchet MS",system-ui,sans-serif; color:var(--dark);
+    background:
+      radial-gradient(circle, #8a6a2f 3px, transparent 4px) 0 0/28px 28px,
+      var(--peg);
+  }
+  .card {
+    width:min(92vw,520px); min-height:340px; padding:28px 24px; text-align:center;
+    background:#fff6e0; border:6px solid var(--dark); border-radius:14px;
+    box-shadow:8px 8px 0 var(--dark); position:relative; overflow:hidden;
+  }
+  h1 { font-size:1.5rem; margin:.2em 0 .6em; }
+  .tool { font-size:3rem; }
+  .tape { height:14px; border:3px solid var(--dark); border-radius:4px; margin-bottom:18px;
+    background:repeating-linear-gradient(90deg,#ffd23f 0 8px,#fff6e0 8px 10px); position:relative; }
+  .tape i { position:absolute; inset:0 auto 0 0; width:0; background:var(--red); opacity:.85; transition:width .4s; }
+  button.opt, button.go {
+    display:block; width:100%; margin:10px 0; padding:12px; font:inherit; font-weight:bold;
+    background:var(--wood); color:var(--dark); border:3px solid var(--dark); border-radius:8px;
+    cursor:pointer; box-shadow:3px 3px 0 var(--dark);
+  }
+  button.opt:active, button.go:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--dark); }
+  .reaction { font-size:1.15rem; margin:16px 0; min-height:3em; }
+  #runner { position:fixed; width:auto; display:inline-block; margin:0; padding:12px 28px; z-index:10; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="tape"><i id="bar"></i></div>
+  <div id="stage"></div>
+</div>
+
+<script>
+const NTFY_URL = "https://ntfy.sh/domantas-bday-ecb745e2af68";
+const stage = document.getElementById("stage");
+const bar = document.getElementById("bar");
+
+const quiz = [
+  { icon:"🧨", q:"Ar petardas megsti?", opts:[
+    ["Taip, labai!", "Žinojau. Kaimynai irgi žino. 💥"],
+    ["Ne, bijau.", "Melas. Matau pagal akis. 🧨"],
+    ["Tik kai kitas uždega.", "Išmintingas žmogus. Saugus atstumas – 10 metrų."] ]},
+  { icon:"🍾", q:"O tai ką pirkai?", opts:[
+    ["Jack Domant.", "Klasika. Visi sprendimai paprastesni su Džeku. 🥃"],
+    ["Dar nieko, tik žiūrėjau.", "Taip, aišku. Pilna garažo dėžė pati atsirado."],
+    ["Medai nesakyk.", "Mūsų paslaptis. Bet čekis jau išsiųstas. 🧾"] ]},
+];
+
+function progress(n) { bar.style.width = (n / 3 * 100) + "%"; }
+
+function intro() {
+  stage.innerHTML = `<div class="tool">🛠️</div><h1>Domantai, su gimtadieniu!</h1>
+    <p>Čėpla ir Kusta paruošė tau galvosūkį</p>
+    <button class="go" id="start">Pradėti</button>`;
+  document.getElementById("start").onclick = () => ask(0);
+}
+
+function ask(i) {
+  progress(i);
+  const s = quiz[i];
+  stage.innerHTML = `<div class="tool">${s.icon}</div><h1>${s.q}</h1>` +
+    s.opts.map((o, k) => `<button class="opt" data-k="${k}">${o[0]}</button>`).join("") +
+    `<div class="reaction" id="r"></div>`;
+  stage.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    stage.querySelectorAll(".opt").forEach(x => x.disabled = true);
+    document.getElementById("r").textContent = s.opts[b.dataset.k][1];
+    setTimeout(() => i + 1 < quiz.length ? ask(i + 1) : chase(), 2200);
+  });
+}
+
+function chase() {
+  progress(2);
+  let tries = 0;
+  stage.innerHTML = `<div class="tool">🔧</div><h1>Paskutinis bandymas: paspausk mygtuką!</h1>
+    <div class="reaction" id="r"></div>
+    <div style="height:60px"></div>`;
+  const btn = document.createElement("button");
+  btn.className = "go"; btn.id = "runner"; btn.textContent = "Spausk!";
+  document.body.appendChild(btn);
+  const place = () => {
+    btn.style.left = Math.random() * (innerWidth - btn.offsetWidth - 20) + 10 + "px";
+    btn.style.top = Math.random() * (innerHeight - btn.offsetHeight - 20) + 10 + "px";
+  };
+  btn.style.left = "calc(50% - 50px)"; btn.style.top = "62%";
+  const lines = ["Per lėtas! 🐌", "Ne tas raktas! 🔑", "Bandyk dar!", "Beveik! (nea)", "Gal su kūju?"];
+  const dodge = () => {
+    if (tries >= 5) return;
+    tries++;
+    document.getElementById("r").textContent = lines[tries - 1];
+    place();
+  };
+  btn.addEventListener("mouseenter", dodge);
+  btn.addEventListener("touchstart", e => { if (tries < 5) { e.preventDefault(); dodge(); } }, { passive:false });
+  btn.onclick = () => { if (tries >= 5) { btn.remove(); finish(); } };
+}
+
+function finish() {
+  progress(3);
+  stage.innerHTML = `<div class="tool">🎁</div><h1>Pavyko, Domantai!</h1>
+    <p class="reaction">Patikrink savo paštą 🎁</p>`;
+  fetch(NTFY_URL, { method:"POST", body:"Domantas baigė atviruką 🎉" }).catch(() => {});
+}
+
+intro();
+</script>
+</body>
+</html>
